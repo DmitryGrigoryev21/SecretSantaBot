@@ -6,6 +6,7 @@ const client = new DiscordJS.Client({
     intents: [Intents.FLAGS.GUILDS,Intents.FLAGS.GUILD_MESSAGES]
 })
 
+let pl = new Array<Participant>()
 
 class Node {
     value: any
@@ -53,6 +54,15 @@ class LinkedList {
         }
       }
 }
+
+class Participant{
+    nameyou: DiscordJS.User
+    match: DiscordJS.User
+    constructor(nameyou: DiscordJS.User, match: DiscordJS.User) {
+      this.nameyou = nameyou;
+      this.match = match;
+    }
+  }
 
 const list = new Map();
 
@@ -140,6 +150,8 @@ client.on('interactionCreate',async(interaction) =>{
     }
     else if (commandName === 'draft'){
 
+        pl = []
+
         const ll = new LinkedList();
         const vals = Array.from(list);
         vals.sort(() => .5 - Math.random()).forEach(n => ll.add({ id: n[0], name: n[1] }))
@@ -147,17 +159,21 @@ client.on('interactionCreate',async(interaction) =>{
         if(!ll.head || !ll.tail) {
             return interaction.reply({content: "No."})
         }
+
         for(const x of ll) {
             
             if(!x.next)break;
 
             const v = x?.value;
-
-            list.set(v.id, { name: v.name, got: x?.next?.value })
+            pl.push(new Participant(v, x?.next?.value));
+            //console.log( v.name, x?.next?.value )
+            //console.log(x)
+            //list.set(v.id, { name: v.name, got: x?.next?.value })
         }
         
-        list.set(ll.tail.value.id, ll.head.value)
 
+        pl.push(new Participant(ll.tail.value, ll.head.value));
+        console.log(pl)
 
         interaction.reply({
 
@@ -167,10 +183,18 @@ client.on('interactionCreate',async(interaction) =>{
 
     }
     else if (commandName === 'reveal'){
-        const you = list.get(interaction.member.user.id);
-        console.log(you)
+        const you = interaction.member.user;
+
+        for (let i = 0; i<pl.length; i++){
+            if (you.id == pl[i].nameyou.id){
+                //console.log("yay")
+                const reveal= 'hi'
+                //console.log(pl[i].match.name)
+                return interaction.reply({content: `Your assigned person is: ${reveal}`, ephemeral: true})
+            }
+        }
         interaction.reply({
-            content: `You got this dickhead: ${you.got.name}`,
+            content: `You are not part of this draft :|`,
             ephemeral: true
         })
     }
