@@ -54,10 +54,15 @@ class LinkedList {
     }
 }
 
+interface SimpleUser {
+    id: string;
+    name: string;
+}
+
 class Participant {
-    you: DiscordJS.User;
-    match: DiscordJS.User;
-    constructor(you: DiscordJS.User, match: DiscordJS.User) {
+    you: SimpleUser;
+    match: SimpleUser;
+    constructor(you: SimpleUser, match: SimpleUser) {
         this.you = you;
         this.match = match;
     }
@@ -112,8 +117,6 @@ client.on("interactionCreate", async (interaction) => {
         //const name = options.getString('name')
         list.set(id, name);
 
-        console.log(id, name);
-
         interaction.reply({
             content: `${name} has joined the draft!`,
             //ephemeral: true,
@@ -131,11 +134,9 @@ client.on("interactionCreate", async (interaction) => {
     } else if (commandName === "list_all") {
         let list_string = "Here is everyone in the draft:";
         for (const [id, name] of list) {
-            console.log(name);
             list_string += `
             ${name}`;
         }
-        console.log(list_string);
         interaction.reply({
             content: list_string,
             //ephemeral: true,
@@ -158,13 +159,9 @@ client.on("interactionCreate", async (interaction) => {
 
             const v = x?.value;
             pl.push(new Participant(v, x?.next?.value));
-            //console.log( v.name, x?.next?.value )
-            //console.log(x)
-            //list.set(v.id, { name: v.name, got: x?.next?.value })
         }
 
         pl.push(new Participant(ll.tail.value, ll.head.value));
-        console.log(pl);
 
         interaction.reply({
             content: "THE DRAFT HAS BEEN MADE",
@@ -173,19 +170,17 @@ client.on("interactionCreate", async (interaction) => {
     } else if (commandName === "reveal") {
         const you = interaction.member.user;
 
-        for (let i = 0; i < pl.length; i++) {
-            if (you.id == pl[i].you.id) {
-                //console.log("yay")
-                const reveal = "hi";
-                //console.log(pl[i].match.name)
-                return interaction.reply({
-                    content: `Your assigned person is: ${pl[i].match.username}`,
-                    ephemeral: true,
-                });
-            }
+        const found = pl.find((n) => n.you.id == you.id);
+
+        if (!found) {
+            return interaction.reply({
+                content: `You are not part of this draft :|`,
+                ephemeral: true,
+            });
         }
+
         interaction.reply({
-            content: `You are not part of this draft :|`,
+            content: `Your assigned person is: <@${found?.match.id}>`,
             ephemeral: true,
         });
     }
